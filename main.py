@@ -3,6 +3,7 @@ import os
 import pandas as pd
 import zipfile
 from bs4 import BeautifulSoup
+from pprint import pprint
 
 def default_settings():
     settings = { 
@@ -67,11 +68,32 @@ def get_file(year):
         file_url = soup.find('div', class_='entry-content').a.get('href')
         try:
             file = requests.get(file_url)
-            os.mkdir('cache')
+            if not os.path.exists('cache'):
+                os.mkdir('cache')
             with open(f'cache/eah-{year}.zip', 'wb') as f:
                 f.write(file.content)
             return print('Descarga exitosa')
         except:
             return print('Revisar error')
 
-get_file(year='2022')
+def extraer_archivos(nombre_archivo_zip, directorio_destino):
+    with zipfile.ZipFile(nombre_archivo_zip, 'r') as archivo_zip:
+        archivo_zip.extractall(directorio_destino)
+
+def descomprimir_archivo_requerido(year):
+    path = f'cache/eah-{year}.zip'
+    extraer_archivos(nombre_archivo_zip=path, directorio_destino=f'cache/eah-{year}')
+
+
+def get_base_eah(year, base):
+    get_file(year=year)
+    descomprimir_archivo_requerido(year=year)
+    if base in ['ind', 'hog']:
+        df = pd.read_csv(f'cache/eah-{year}/eah{year}_bu_ampliada_{base}.txt', sep=';', encoding='utf-8')
+        return df
+    else:
+        print(f'El valor del parámetro {base} es inválido\nEl valor de base debe ser ind o hog, según desee obtener la base de datos individual o de hogares de la EAH del año {year}')
+        
+
+pprint(obtener_listas_v1_1())
+get_file('2013')
